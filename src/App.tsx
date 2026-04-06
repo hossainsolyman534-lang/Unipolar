@@ -27,16 +27,6 @@ import { cn } from './lib/utils';
 // --- Components ---
 
 const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const navLinks = [
-    { name: 'হোম', href: '#' },
-    { name: 'সার্ভিস', href: '#services' },
-    { name: 'পোর্টফোলিও', href: '#portfolio' },
-    { name: 'কেন আমরা?', href: '#why-us' },
-    { name: 'যোগাযোগ', href: '#contact' },
-  ];
-
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -46,64 +36,22 @@ const Navbar = () => {
               <Shirt className="text-white w-6 h-6" />
             </div>
             <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
-              ApparelPro
+              Fast Unipolar
             </span>
           </div>
 
-          {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => (
-              <a
-                key={link.name}
-                href={link.href}
-                className="text-gray-600 hover:text-indigo-600 font-medium transition-colors"
-              >
-                {link.name}
-              </a>
-            ))}
-            <button className="bg-indigo-600 text-white px-6 py-2.5 rounded-full font-semibold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200">
-              অর্ডার করুন
-            </button>
-          </div>
-
-          {/* Mobile Menu Button */}
-          <div className="md:hidden">
-            <button onClick={() => setIsOpen(!isOpen)} className="text-gray-600 p-2">
-              {isOpen ? <X size={28} /> : <Menu size={28} />}
-            </button>
+          <div className="flex items-center gap-4">
+            <a 
+              href="https://wa.me/8801234567890" 
+              target="_blank" 
+              rel="noreferrer"
+              className="bg-green-600 text-white px-6 py-2.5 rounded-full font-semibold hover:bg-green-700 transition-all shadow-lg shadow-green-200 flex items-center gap-2"
+            >
+              <MessageSquare size={18} /> হোয়াটসঅ্যাপ করুন
+            </a>
           </div>
         </div>
       </div>
-
-      {/* Mobile Nav */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-white border-b border-gray-100 overflow-hidden"
-          >
-            <div className="px-4 pt-2 pb-6 space-y-2">
-              {navLinks.map((link) => (
-                <a
-                  key={link.name}
-                  href={link.href}
-                  onClick={() => setIsOpen(false)}
-                  className="block px-3 py-4 text-base font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg transition-colors"
-                >
-                  {link.name}
-                </a>
-              ))}
-              <div className="pt-4">
-                <button className="w-full bg-indigo-600 text-white px-6 py-3 rounded-xl font-semibold">
-                  অর্ডার করুন
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </nav>
   );
 };
@@ -165,12 +113,20 @@ const Hero = () => {
               variants={itemVariants}
               className="flex flex-col sm:flex-row gap-4"
             >
-              <button className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-200 flex items-center justify-center gap-2">
-                ফ্রি কনসাল্টেশন নিন <ArrowRight size={20} />
-              </button>
-              <button className="bg-white text-gray-900 border-2 border-gray-100 px-8 py-4 rounded-2xl font-bold text-lg hover:border-indigo-200 hover:bg-indigo-50/30 transition-all flex items-center justify-center gap-2">
+              <a 
+                href="https://wa.me/8801234567890" 
+                target="_blank" 
+                rel="noreferrer"
+                className="bg-green-600 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:bg-green-700 transition-all shadow-xl shadow-green-200 flex items-center justify-center gap-2"
+              >
+                হোয়াটসঅ্যাপে অর্ডার দিন <MessageSquare size={20} />
+              </a>
+              <a 
+                href="#gallery"
+                className="bg-white text-gray-900 border-2 border-gray-100 px-8 py-4 rounded-2xl font-bold text-lg hover:border-indigo-200 hover:bg-indigo-50/30 transition-all flex items-center justify-center gap-2"
+              >
                 আমাদের কাজ দেখুন
-              </button>
+              </a>
             </motion.div>
             
             <motion.div 
@@ -312,10 +268,7 @@ const Services = () => {
                   {service.icon}
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-3">{service.title}</h3>
-                <p className="text-gray-600 mb-6 leading-relaxed">{service.desc}</p>
-                <button className="text-indigo-600 font-bold flex items-center gap-2 hover:gap-3 transition-all">
-                  বিস্তারিত দেখুন <ArrowRight size={18} />
-                </button>
+                <p className="text-gray-600 leading-relaxed">{service.desc}</p>
               </div>
             </motion.div>
           ))}
@@ -325,34 +278,13 @@ const Services = () => {
   );
 };
 
-const Portfolio = () => {
-  const categories = ['সব', 'টি-শার্ট', 'পোলো', 'জার্সি'];
-  const [active, setActive] = useState('সব');
-
+const Gallery = () => {
   return (
-    <section id="portfolio" className="py-24">
+    <section id="gallery" className="py-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
-          <div>
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">আমাদের সাম্প্রতিক কাজ</h2>
-            <p className="text-lg text-gray-600">বিগত কয়েক মাসে আমাদের করা কিছু সেরা ডিজাইন।</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setActive(cat)}
-                className={cn(
-                  "px-6 py-2 rounded-full font-semibold transition-all",
-                  active === cat 
-                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200" 
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                )}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
+        <div className="text-center mb-16">
+          <h2 className="text-4xl font-bold text-gray-900 mb-4">গ্যালারি</h2>
+          <p className="text-lg text-gray-600">আমাদের করা কিছু উল্লেখযোগ্য কাজের নমুনা।</p>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -371,8 +303,7 @@ const Portfolio = () => {
                 referrerPolicy="no-referrer"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-6">
-                <p className="text-white font-bold text-lg">কর্পোরেট ডিজাইন {i}</p>
-                <p className="text-gray-300 text-sm">ব্র্যান্ডিং প্রজেক্ট</p>
+                <p className="text-white font-bold text-lg">ডিজাইন নমুনা {i}</p>
               </div>
             </motion.div>
           ))}
@@ -455,102 +386,41 @@ const Contact = () => {
   return (
     <section id="contact" className="py-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-[3rem] shadow-2xl shadow-indigo-100 border border-gray-100 overflow-hidden">
-          <div className="grid lg:grid-cols-2">
-            <div className="p-8 sm:p-16 bg-indigo-600 text-white">
-              <h2 className="text-4xl font-bold mb-8">আমাদের সাথে যোগাযোগ করুন</h2>
-              <p className="text-indigo-100 mb-12 text-lg">
-                আপনার যেকোনো প্রশ্ন বা অর্ডারের জন্য আমাদের সাথে যোগাযোগ করতে পারেন। আমরা খুব দ্রুত আপনার সাথে যোগাযোগ করব।
-              </p>
-              
-              <div className="space-y-8">
-                <div className="flex items-center gap-6">
-                  <div className="bg-indigo-500 p-4 rounded-2xl">
-                    <Phone className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <p className="text-indigo-200 text-sm">ফোন করুন</p>
-                    <p className="text-xl font-bold">+৮৮০ ১২৩৪ ৫৬৭৮৯০</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-6">
-                  <div className="bg-indigo-500 p-4 rounded-2xl">
-                    <Mail className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <p className="text-indigo-200 text-sm">ইমেইল করুন</p>
-                    <p className="text-xl font-bold">info@apparelpro.com</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-6">
-                  <div className="bg-indigo-500 p-4 rounded-2xl">
-                    <MapPin className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <p className="text-indigo-200 text-sm">অফিস ঠিকানা</p>
-                    <p className="text-xl font-bold">বনানী, ঢাকা, বাংলাদেশ</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mt-16 flex gap-4">
-                {[Facebook, Instagram, Twitter].map((Icon, i) => (
-                  <a key={i} href="#" className="bg-indigo-500 p-3 rounded-xl hover:bg-indigo-400 transition-colors">
-                    <Icon size={24} />
-                  </a>
-                ))}
-              </div>
-            </div>
+        <div className="bg-indigo-600 rounded-[3rem] shadow-2xl shadow-indigo-100 overflow-hidden p-8 sm:p-16 text-center text-white">
+          <h2 className="text-4xl font-bold mb-6">সরাসরি অর্ডার করতে হোয়াটসঅ্যাপ করুন</h2>
+          <p className="text-indigo-100 mb-12 text-lg max-w-2xl mx-auto">
+            আপনার পছন্দের ডিজাইন বা যেকোনো জিজ্ঞাসার জন্য সরাসরি আমাদের হোয়াটসঅ্যাপে মেসেজ দিন। আমরা দ্রুত আপনার সাথে যোগাযোগ করব।
+          </p>
+          
+          <div className="flex flex-col items-center gap-8">
+            <a 
+              href="https://wa.me/8801234567890" 
+              target="_blank" 
+              rel="noreferrer"
+              className="bg-white text-green-600 px-12 py-6 rounded-2xl font-bold text-2xl hover:bg-gray-50 transition-all shadow-2xl flex items-center gap-4"
+            >
+              <MessageSquare size={32} /> হোয়াটসঅ্যাপে কথা বলুন
+            </a>
             
-            <div className="p-8 sm:p-16">
-              <form className="space-y-6">
-                <div className="grid sm:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold text-gray-700">আপনার নাম</label>
-                    <input 
-                      type="text" 
-                      placeholder="নাম লিখুন"
-                      className="w-full px-6 py-4 rounded-2xl bg-gray-50 border-transparent focus:bg-white focus:border-indigo-600 focus:ring-0 transition-all outline-none"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold text-gray-700">ফোন নম্বর</label>
-                    <input 
-                      type="tel" 
-                      placeholder="নম্বর লিখুন"
-                      className="w-full px-6 py-4 rounded-2xl bg-gray-50 border-transparent focus:bg-white focus:border-indigo-600 focus:ring-0 transition-all outline-none"
-                    />
-                  </div>
+            <div className="grid sm:grid-cols-3 gap-8 w-full max-w-4xl mt-8">
+              <div className="flex flex-col items-center gap-3">
+                <div className="bg-indigo-500 p-4 rounded-2xl">
+                  <Phone className="w-6 h-6" />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-700">ইমেইল (ঐচ্ছিক)</label>
-                  <input 
-                    type="email" 
-                    placeholder="ইমেইল লিখুন"
-                    className="w-full px-6 py-4 rounded-2xl bg-gray-50 border-transparent focus:bg-white focus:border-indigo-600 focus:ring-0 transition-all outline-none"
-                  />
+                <p className="font-bold">+৮৮০ ১২৩৪ ৫৬৭৮৯০</p>
+              </div>
+              <div className="flex flex-col items-center gap-3">
+                <div className="bg-indigo-500 p-4 rounded-2xl">
+                  <Mail className="w-6 h-6" />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-700">সার্ভিস নির্বাচন করুন</label>
-                  <select className="w-full px-6 py-4 rounded-2xl bg-gray-50 border-transparent focus:bg-white focus:border-indigo-600 focus:ring-0 transition-all outline-none appearance-none">
-                    <option>টি-শার্ট ডিজাইন</option>
-                    <option>পোলো শার্ট ডিজাইন</option>
-                    <option>জার্সি ডিজাইন</option>
-                    <option>অন্যান্য</option>
-                  </select>
+                <p className="font-bold">info@fastunipolar.com</p>
+              </div>
+              <div className="flex flex-col items-center gap-3">
+                <div className="bg-indigo-500 p-4 rounded-2xl">
+                  <MapPin className="w-6 h-6" />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-700">আপনার মেসেজ</label>
-                  <textarea 
-                    rows={4}
-                    placeholder="আপনার চাহিদা সম্পর্কে বিস্তারিত লিখুন..."
-                    className="w-full px-6 py-4 rounded-2xl bg-gray-50 border-transparent focus:bg-white focus:border-indigo-600 focus:ring-0 transition-all outline-none resize-none"
-                  />
-                </div>
-                <button className="w-full bg-indigo-600 text-white py-5 rounded-2xl font-bold text-lg hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100">
-                  মেসেজ পাঠান
-                </button>
-              </form>
+                <p className="font-bold">ঢাকা, বাংলাদেশ</p>
+              </div>
             </div>
           </div>
         </div>
@@ -569,7 +439,7 @@ const Footer = () => {
               <div className="bg-indigo-600 p-2 rounded-lg">
                 <Shirt className="text-white w-5 h-5" />
               </div>
-              <span className="text-xl font-bold text-gray-900">ApparelPro</span>
+              <span className="text-xl font-bold text-gray-900">Fast Unipolar</span>
             </div>
             <p className="text-gray-500 leading-relaxed">
               আমরা আপনার ব্র্যান্ডের জন্য সেরা মানের কাস্টম পোশাক ডিজাইন এবং সরবরাহ নিশ্চিত করি।
@@ -581,7 +451,7 @@ const Footer = () => {
             <ul className="space-y-4 text-gray-500">
               <li><a href="#" className="hover:text-indigo-600 transition-colors">হোম</a></li>
               <li><a href="#services" className="hover:text-indigo-600 transition-colors">সার্ভিস</a></li>
-              <li><a href="#portfolio" className="hover:text-indigo-600 transition-colors">পোর্টফোলিও</a></li>
+              <li><a href="#gallery" className="hover:text-indigo-600 transition-colors">গ্যালারি</a></li>
               <li><a href="#contact" className="hover:text-indigo-600 transition-colors">যোগাযোগ</a></li>
             </ul>
           </div>
@@ -614,7 +484,7 @@ const Footer = () => {
         
         <div className="pt-8 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-gray-500 text-sm">
-            © ২০২৬ ApparelPro. সর্বস্বত্ব সংরক্ষিত।
+            © ২০২৬ Fast Unipolar. সর্বস্বত্ব সংরক্ষিত।
           </p>
           <div className="flex gap-6 text-sm text-gray-500">
             <a href="#" className="hover:text-indigo-600">প্রাইভেসি পলিসি</a>
@@ -634,7 +504,7 @@ export default function App() {
         <Hero />
         <Services />
         <WhyUs />
-        <Portfolio />
+        <Gallery />
         <Contact />
       </main>
       <Footer />
