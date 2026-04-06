@@ -1,0 +1,62 @@
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: settings
+// Document ID: global
+// Fields:
+//   - pixelId: string (optional)
+//   - heroTitle: string (optional)
+//   - heroSubtitle: string (optional)
+//   - whatsappNumber: string (optional)
+//   - companyName: string (required)
+//
+// Collection: gallery
+// Document ID: auto-generated
+// Fields:
+//   - url: string (required)
+//   - title: string (optional)
+//   - createdAt: timestamp (optional)
+//
+// Collection: services
+// Document ID: auto-generated
+// Fields:
+//   - title: string (required)
+//   - description: string (required)
+//   - imageUrl: string (optional)
+//
+// ===============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+        (request.auth.token.email == "hossainsolyman534@gmail.com" && request.auth.token.email_verified == true);
+    }
+
+    // Settings
+    match /settings/global {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Gallery
+    match /gallery/{imageId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Services
+    match /services/{serviceId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "entities": {
+    "settings": {
+      "title": "Settings",
+      "description": "Global application settings including Meta Pixel and general content.",
+      "type": "object",
+      "properties": {
+        "pixelId": { "type": "string", "description": "Meta Pixel ID" },
+        "heroTitle": { "type": "string" },
+        "heroSubtitle": { "type": "string" },
+        "whatsappNumber": { "type": "string" },
+        "companyName": { "type": "string" }
+      },
+      "required": ["companyName"]
+    },
+    "galleryImage": {
+      "title": "Gallery Image",
+      "description": "Images displayed in the gallery section.",
+      "type": "object",
+      "properties": {
+        "url": { "type": "string" },
+        "title": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["url"]
+    },
+    "service": {
+      "title": "Service",
+      "description": "Services offered by the company.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "imageUrl": { "type": "string" }
+      },
+      "required": ["title", "description"]
+    }
+  },
+  "firestore": {
+    "settings/global": {
+      "schema": "settings",
+      "description": "Global settings document"
+    },
+    "gallery": {
+      "schema": "galleryImage",
+      "description": "Collection of gallery images"
+    },
+    "services": {
+      "schema": "service",
+      "description": "Collection of services"
+    }
+  }
+}

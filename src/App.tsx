@@ -3,511 +3,565 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Shirt, 
   CheckCircle2, 
-  Users, 
   Palette, 
   Zap, 
   MessageSquare, 
   Phone, 
   Mail, 
   MapPin, 
-  Facebook, 
-  Instagram, 
-  Twitter,
   ArrowRight,
-  Menu,
+  Plus,
+  Trash2,
+  Settings as SettingsIcon,
+  Image as ImageIcon,
+  LogOut,
+  LogIn,
+  Save,
   X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './lib/utils';
+import { db, auth } from './firebase';
+import { 
+  collection, 
+  doc, 
+  onSnapshot, 
+  setDoc, 
+  addDoc, 
+  deleteDoc, 
+  query, 
+  orderBy
+} from 'firebase/firestore';
+import { 
+  signInWithPopup, 
+  GoogleAuthProvider, 
+  onAuthStateChanged, 
+  signOut,
+  User
+} from 'firebase/auth';
+import { MetaPixel } from './components/MetaPixel';
+import { Toaster, toast } from 'react-hot-toast';
+
+// --- Types ---
+interface GlobalSettings {
+  pixelId: string;
+  heroTitle: string;
+  heroSubtitle: string;
+  whatsappNumber: string;
+  companyName: string;
+  galleryTitle: string;
+  gallerySubtitle: string;
+}
+
+interface GalleryImage {
+  id: string;
+  url: string;
+  title: string;
+}
+
+interface Service {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+}
+
+// --- Default Data ---
+const DEFAULT_SETTINGS: GlobalSettings = {
+  pixelId: '',
+  heroTitle: 'আপনার ব্র্যান্ডের জন্য সেরা ডিজাইন',
+  heroSubtitle: 'আমরা আপনার কোম্পানির ব্র্যান্ড ভ্যালু অনুযায়ী কাস্টমাইজ টি-শার্ট, পোলো এবং জার্সি ডিজাইন করে থাকি। গুণগত মান এবং আধুনিক ডিজাইনের নিশ্চয়তা।',
+  whatsappNumber: '8801234567890',
+  companyName: 'Fast Unipolar',
+  galleryTitle: 'গ্যালারি',
+  gallerySubtitle: 'আমাদের করা কিছু উল্লেখযোগ্য কাজের নমুনা।'
+};
 
 // --- Components ---
 
-const Navbar = () => {
-  return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-20 items-center">
-          <div className="flex items-center gap-2">
-            <div className="bg-indigo-600 p-2 rounded-lg">
-              <Shirt className="text-white w-6 h-6" />
-            </div>
-            <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
-              Fast Unipolar
-            </span>
-          </div>
+const AdminPanel = ({ settings, gallery, user, onClose }: { 
+  settings: GlobalSettings, 
+  gallery: GalleryImage[], 
+  user: User | null,
+  onClose: () => void
+}) => {
+  const [activeTab, setActiveTab] = useState<'content' | 'gallery' | 'pixel'>('content');
+  const [localSettings, setLocalSettings] = useState(settings);
+  const [newImageUrl, setNewImageUrl] = useState('');
+  const [newImageTitle, setNewImageTitle] = useState('');
+  
+  const isAdmin = user?.email === 'hossainsolyman534@gmail.com';
 
-          <div className="flex items-center gap-4">
-            <a 
-              href="https://wa.me/8801234567890" 
-              target="_blank" 
-              rel="noreferrer"
-              className="bg-green-600 text-white px-6 py-2.5 rounded-full font-semibold hover:bg-green-700 transition-all shadow-lg shadow-green-200 flex items-center gap-2"
-            >
-              <MessageSquare size={18} /> হোয়াটসঅ্যাপ করুন
-            </a>
-          </div>
-        </div>
-      </div>
-    </nav>
-  );
-};
+  useEffect(() => {
+    setLocalSettings(settings);
+  }, [settings]);
 
-const Hero = () => {
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2,
-      },
-    },
-  };
+  if (!user || !isAdmin) return null;
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: { duration: 0.6, ease: "easeOut" }
-    },
-  };
-
-  return (
-    <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-100/50 rounded-full blur-3xl" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-violet-100/50 rounded-full blur-3xl" />
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            <motion.span 
-              variants={itemVariants}
-              className="inline-block px-4 py-1.5 bg-indigo-50 text-indigo-600 rounded-full text-sm font-bold tracking-wide uppercase mb-6"
-            >
-              প্রিমিয়াম কাস্টম অ্যাপারেল
-            </motion.span>
-            <motion.h1 
-              variants={itemVariants}
-              className="text-5xl lg:text-7xl font-extrabold text-gray-900 leading-[1.1] mb-6"
-            >
-              আপনার ব্র্যান্ডের জন্য <span className="text-indigo-600">সেরা ডিজাইন</span>
-            </motion.h1>
-            <motion.p 
-              variants={itemVariants}
-              className="text-xl text-gray-600 mb-10 leading-relaxed max-w-xl"
-            >
-              আমরা আপনার কোম্পানির ব্র্যান্ড ভ্যালু অনুযায়ী কাস্টমাইজ টি-শার্ট, পোলো এবং জার্সি ডিজাইন করে থাকি। গুণগত মান এবং আধুনিক ডিজাইনের নিশ্চয়তা।
-            </motion.p>
-            <motion.div 
-              variants={itemVariants}
-              className="flex flex-col sm:flex-row gap-4"
-            >
-              <a 
-                href="https://wa.me/8801234567890" 
-                target="_blank" 
-                rel="noreferrer"
-                className="bg-green-600 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:bg-green-700 transition-all shadow-xl shadow-green-200 flex items-center justify-center gap-2"
-              >
-                হোয়াটসঅ্যাপে অর্ডার দিন <MessageSquare size={20} />
-              </a>
-              <a 
-                href="#gallery"
-                className="bg-white text-gray-900 border-2 border-gray-100 px-8 py-4 rounded-2xl font-bold text-lg hover:border-indigo-200 hover:bg-indigo-50/30 transition-all flex items-center justify-center gap-2"
-              >
-                আমাদের কাজ দেখুন
-              </a>
-            </motion.div>
-            
-            <motion.div 
-              variants={itemVariants}
-              className="mt-12 flex items-center gap-6"
-            >
-              <div className="flex -space-x-3">
-                {[1, 2, 3, 4].map((i) => (
-                  <img
-                    key={i}
-                    src={`https://picsum.photos/seed/user${i}/100/100`}
-                    alt="User"
-                    className="w-12 h-12 rounded-full border-4 border-white object-cover"
-                    referrerPolicy="no-referrer"
-                  />
-                ))}
-              </div>
-              <div>
-                <p className="text-gray-900 font-bold">৫০০+ কোম্পানি</p>
-                <p className="text-gray-500 text-sm font-medium">আমাদের উপর আস্থা রেখেছেন</p>
-              </div>
-            </motion.div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ 
-              opacity: 1, 
-              scale: 1,
-              y: [0, -15, 0] 
-            }}
-            transition={{ 
-              opacity: { duration: 0.8 },
-              scale: { duration: 0.8 },
-              y: { 
-                duration: 5, 
-                repeat: Infinity, 
-                ease: "easeInOut" 
-              }
-            }}
-            className="relative"
-          >
-            <div className="relative z-10 rounded-3xl overflow-hidden shadow-2xl shadow-indigo-200/50">
-              <img
-                src="https://picsum.photos/seed/apparel-hero/800/1000"
-                alt="Custom Apparel"
-                className="w-full h-auto object-cover"
-                referrerPolicy="no-referrer"
-              />
-            </div>
-            {/* Floating Elements */}
-            <motion.div
-              animate={{ y: [0, -20, 0], x: [0, 10, 0] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -top-6 -right-6 bg-white p-6 rounded-2xl shadow-xl z-20 hidden sm:block"
-            >
-              <div className="flex items-center gap-4">
-                <div className="bg-green-100 p-2 rounded-lg">
-                  <CheckCircle2 className="text-green-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-gray-900">১০০% কটন</p>
-                  <p className="text-xs text-gray-500">প্রিমিয়াম ফেব্রিক</p>
-                </div>
-              </div>
-            </motion.div>
-            <motion.div
-              animate={{ y: [0, 20, 0], x: [0, -10, 0] }}
-              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-              className="absolute -bottom-6 -left-6 bg-white p-6 rounded-2xl shadow-xl z-20 hidden sm:block"
-            >
-              <div className="flex items-center gap-4">
-                <div className="bg-orange-100 p-2 rounded-lg">
-                  <Palette className="text-orange-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-gray-900">কাস্টম ডিজাইন</p>
-                  <p className="text-xs text-gray-500">আপনার পছন্দমতো</p>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        </div>
-      </div>
-    </section>
-  );
-};
-
-const Services = () => {
-  const services = [
-    {
-      title: 'কাস্টম টি-শার্ট',
-      desc: 'অফিস ইভেন্ট বা প্রমোশনের জন্য প্রিমিয়াম কোয়ালিটি টি-শার্ট।',
-      icon: <Shirt className="w-8 h-8" />,
-      color: 'bg-blue-50 text-blue-600',
-      image: 'https://picsum.photos/seed/tshirt/600/400'
-    },
-    {
-      title: 'কর্পোরেট পোলো',
-      desc: 'অফিসিয়াল লুকের জন্য এমব্রয়ডারি করা স্মার্ট পোলো শার্ট।',
-      icon: <Shirt className="w-8 h-8" />,
-      color: 'bg-indigo-50 text-indigo-600',
-      image: 'https://picsum.photos/seed/polo/600/400'
-    },
-    {
-      title: 'স্পোর্টস জার্সি',
-      desc: 'টিম স্পিরিট বাড়াতে আধুনিক ও আরামদায়ক স্পোর্টস জার্সি।',
-      icon: <Zap className="w-8 h-8" />,
-      color: 'bg-violet-50 text-violet-600',
-      image: 'https://picsum.photos/seed/jersey/600/400'
+  const handleSaveSettings = async () => {
+    try {
+      await setDoc(doc(db, 'settings', 'global'), localSettings);
+      toast.success('সেটিংস সেভ হয়েছে!');
+    } catch (e) {
+      toast.error('সেভ করতে সমস্যা হয়েছে');
     }
-  ];
+  };
+
+  const handleAddGalleryImage = async () => {
+    if (!newImageUrl) return;
+    try {
+      await addDoc(collection(db, 'gallery'), {
+        url: newImageUrl,
+        title: newImageTitle,
+        createdAt: new Date().toISOString()
+      });
+      setNewImageUrl('');
+      setNewImageTitle('');
+      toast.success('ছবি যোগ হয়েছে!');
+    } catch (e) {
+      toast.error('যোগ করতে সমস্যা হয়েছে');
+    }
+  };
+
+  const handleDeleteGalleryImage = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'gallery', id));
+      toast.success('ছবি মুছে ফেলা হয়েছে');
+    } catch (e) {
+      toast.error('মুছতে সমস্যা হয়েছে');
+    }
+  };
 
   return (
-    <section id="services" className="py-24 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">আমাদের সার্ভিসসমূহ</h2>
-          <p className="text-lg text-gray-600">আমরা প্রতিটি ডিজাইন আপনার ব্র্যান্ডের গাইডলাইন মেনে নিখুঁতভাবে তৈরি করি।</p>
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 20 }}
+      className="fixed inset-0 z-[100] bg-white overflow-y-auto"
+    >
+      <div className="max-w-4xl mx-auto px-4 py-12">
+        <div className="flex justify-between items-center mb-12">
+          <h2 className="text-3xl font-bold flex items-center gap-3">
+            <SettingsIcon className="text-indigo-600" /> অ্যাডমিন প্যানেল
+          </h2>
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => signOut(auth)}
+              className="flex items-center gap-2 text-red-600 font-bold px-4 py-2 hover:bg-red-50 rounded-xl transition-all"
+            >
+              <LogOut size={20} /> লগ আউট
+            </button>
+            <button 
+              onClick={onClose}
+              className="p-2 bg-gray-100 text-gray-600 rounded-full hover:bg-gray-200 transition-all"
+            >
+              <X size={24} />
+            </button>
+          </div>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
-          {services.map((service, idx) => (
-            <motion.div
-              key={idx}
-              whileHover={{ y: -10 }}
-              className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-gray-100"
+        <div className="flex gap-4 mb-8 border-b border-gray-100 pb-4 overflow-x-auto">
+          {[
+            { id: 'content', label: 'কন্টেন্ট', icon: <MessageSquare size={18} /> },
+            { id: 'gallery', label: 'গ্যালারি', icon: <ImageIcon size={18} /> },
+            { id: 'pixel', label: 'পিক্সেল', icon: <Zap size={18} /> },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={cn(
+                "flex items-center gap-2 px-6 py-2 rounded-full font-bold transition-all whitespace-nowrap",
+                activeTab === tab.id ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              )}
             >
-              <div className="h-48 overflow-hidden">
-                <img
-                  src={service.image}
-                  alt={service.title}
-                  className="w-full h-full object-cover"
-                  referrerPolicy="no-referrer"
+              {tab.icon} {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="space-y-8">
+          {activeTab === 'content' && (
+            <div className="space-y-6 bg-gray-50 p-8 rounded-3xl">
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-gray-700">কোম্পানির নাম</label>
+                <input 
+                  value={localSettings.companyName}
+                  onChange={e => setLocalSettings({...localSettings, companyName: e.target.value})}
+                  className="w-full px-6 py-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-indigo-600"
                 />
               </div>
-              <div className="p-8">
-                <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center mb-6", service.color)}>
-                  {service.icon}
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-3">{service.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{service.desc}</p>
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-gray-700">হিরো টাইটেল</label>
+                <input 
+                  value={localSettings.heroTitle}
+                  onChange={e => setLocalSettings({...localSettings, heroTitle: e.target.value})}
+                  className="w-full px-6 py-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-indigo-600"
+                />
               </div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
-
-const Gallery = () => {
-  return (
-    <section id="gallery" className="py-24">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">গ্যালারি</h2>
-          <p className="text-lg text-gray-600">আমাদের করা কিছু উল্লেখযোগ্য কাজের নমুনা।</p>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-            <motion.div
-              key={i}
-              layout
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="group relative aspect-[3/4] rounded-2xl overflow-hidden bg-gray-100"
-            >
-              <img
-                src={`https://picsum.photos/seed/work${i}/600/800`}
-                alt="Work"
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                referrerPolicy="no-referrer"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-6">
-                <p className="text-white font-bold text-lg">ডিজাইন নমুনা {i}</p>
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-gray-700">হিরো সাবটাইটেল</label>
+                <textarea 
+                  value={localSettings.heroSubtitle}
+                  onChange={e => setLocalSettings({...localSettings, heroSubtitle: e.target.value})}
+                  rows={3}
+                  className="w-full px-6 py-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-indigo-600"
+                />
               </div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
-
-const WhyUs = () => {
-  const features = [
-    {
-      title: 'ইউনিক ডিজাইন',
-      desc: 'প্রতিটি ডিজাইন আপনার ব্র্যান্ডের কথা মাথায় রেখে ইউনিকভাবে করা হয়।',
-      icon: <Palette className="w-6 h-6" />
-    },
-    {
-      title: 'দ্রুত ডেলিভারি',
-      desc: 'আমরা সময়ের গুরুত্ব বুঝি, তাই নির্দিষ্ট সময়ের মধ্যেই ডেলিভারি নিশ্চিত করি।',
-      icon: <Zap className="w-6 h-6" />
-    },
-    {
-      title: 'সাশ্রয়ী মূল্য',
-      desc: 'সেরা কোয়ালিটির সাথে আমরা দিচ্ছি বাজারের সবচেয়ে সাশ্রয়ী মূল্য।',
-      icon: <CheckCircle2 className="w-6 h-6" />
-    },
-    {
-      title: '২৪/৭ সাপোর্ট',
-      desc: 'যেকোনো প্রয়োজনে আমাদের সাপোর্ট টিম সবসময় আপনার পাশে আছে।',
-      icon: <MessageSquare className="w-6 h-6" />
-    }
-  ];
-
-  return (
-    <section id="why-us" className="py-24 bg-indigo-900 text-white overflow-hidden relative">
-      <div className="absolute top-0 right-0 w-1/2 h-full bg-indigo-800/50 -skew-x-12 translate-x-1/4" />
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
-          <div>
-            <h2 className="text-4xl font-bold mb-6">কেন আমাদের পছন্দ করবেন?</h2>
-            <p className="text-indigo-100 text-lg mb-12 leading-relaxed">
-              আমরা শুধু কাপড় ডিজাইন করি না, আমরা আপনার ব্র্যান্ডের গল্প ফুটিয়ে তুলি। আমাদের অভিজ্ঞ ডিজাইনার টিম এবং আধুনিক প্রিন্টিং টেকনোলজি আপনাকে দিবে সেরা অভিজ্ঞতা।
-            </p>
-            
-            <div className="grid sm:grid-cols-2 gap-8">
-              {features.map((f, i) => (
-                <div key={i} className="flex gap-4">
-                  <div className="bg-indigo-700/50 p-3 rounded-xl h-fit">
-                    {f.icon}
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-xl mb-2">{f.title}</h4>
-                    <p className="text-indigo-200 text-sm leading-relaxed">{f.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          <div className="relative">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-4 pt-12">
-                <img src="https://picsum.photos/seed/feat1/400/500" className="rounded-2xl shadow-2xl" referrerPolicy="no-referrer" />
-                <img src="https://picsum.photos/seed/feat2/400/300" className="rounded-2xl shadow-2xl" referrerPolicy="no-referrer" />
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-gray-700">হোয়াটসঅ্যাপ নম্বর (Country Code সহ)</label>
+                <input 
+                  value={localSettings.whatsappNumber}
+                  onChange={e => setLocalSettings({...localSettings, whatsappNumber: e.target.value})}
+                  className="w-full px-6 py-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-indigo-600"
+                />
               </div>
-              <div className="space-y-4">
-                <img src="https://picsum.photos/seed/feat3/400/300" className="rounded-2xl shadow-2xl" referrerPolicy="no-referrer" />
-                <img src="https://picsum.photos/seed/feat4/400/500" className="rounded-2xl shadow-2xl" referrerPolicy="no-referrer" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-};
-
-const Contact = () => {
-  return (
-    <section id="contact" className="py-24">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-indigo-600 rounded-[3rem] shadow-2xl shadow-indigo-100 overflow-hidden p-8 sm:p-16 text-center text-white">
-          <h2 className="text-4xl font-bold mb-6">সরাসরি অর্ডার করতে হোয়াটসঅ্যাপ করুন</h2>
-          <p className="text-indigo-100 mb-12 text-lg max-w-2xl mx-auto">
-            আপনার পছন্দের ডিজাইন বা যেকোনো জিজ্ঞাসার জন্য সরাসরি আমাদের হোয়াটসঅ্যাপে মেসেজ দিন। আমরা দ্রুত আপনার সাথে যোগাযোগ করব।
-          </p>
-          
-          <div className="flex flex-col items-center gap-8">
-            <a 
-              href="https://wa.me/8801234567890" 
-              target="_blank" 
-              rel="noreferrer"
-              className="bg-white text-green-600 px-12 py-6 rounded-2xl font-bold text-2xl hover:bg-gray-50 transition-all shadow-2xl flex items-center gap-4"
-            >
-              <MessageSquare size={32} /> হোয়াটসঅ্যাপে কথা বলুন
-            </a>
-            
-            <div className="grid sm:grid-cols-3 gap-8 w-full max-w-4xl mt-8">
-              <div className="flex flex-col items-center gap-3">
-                <div className="bg-indigo-500 p-4 rounded-2xl">
-                  <Phone className="w-6 h-6" />
-                </div>
-                <p className="font-bold">+৮৮০ ১২৩৪ ৫৬৭৮৯০</p>
-              </div>
-              <div className="flex flex-col items-center gap-3">
-                <div className="bg-indigo-500 p-4 rounded-2xl">
-                  <Mail className="w-6 h-6" />
-                </div>
-                <p className="font-bold">info@fastunipolar.com</p>
-              </div>
-              <div className="flex flex-col items-center gap-3">
-                <div className="bg-indigo-500 p-4 rounded-2xl">
-                  <MapPin className="w-6 h-6" />
-                </div>
-                <p className="font-bold">ঢাকা, বাংলাদেশ</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-};
-
-const Footer = () => {
-  return (
-    <footer className="bg-gray-50 pt-20 pb-10 border-t border-gray-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid md:grid-cols-4 gap-12 mb-16">
-          <div className="col-span-1 md:col-span-1">
-            <div className="flex items-center gap-2 mb-6">
-              <div className="bg-indigo-600 p-2 rounded-lg">
-                <Shirt className="text-white w-5 h-5" />
-              </div>
-              <span className="text-xl font-bold text-gray-900">Fast Unipolar</span>
-            </div>
-            <p className="text-gray-500 leading-relaxed">
-              আমরা আপনার ব্র্যান্ডের জন্য সেরা মানের কাস্টম পোশাক ডিজাইন এবং সরবরাহ নিশ্চিত করি।
-            </p>
-          </div>
-          
-          <div>
-            <h4 className="font-bold text-gray-900 mb-6">লিঙ্কসমূহ</h4>
-            <ul className="space-y-4 text-gray-500">
-              <li><a href="#" className="hover:text-indigo-600 transition-colors">হোম</a></li>
-              <li><a href="#services" className="hover:text-indigo-600 transition-colors">সার্ভিস</a></li>
-              <li><a href="#gallery" className="hover:text-indigo-600 transition-colors">গ্যালারি</a></li>
-              <li><a href="#contact" className="hover:text-indigo-600 transition-colors">যোগাযোগ</a></li>
-            </ul>
-          </div>
-          
-          <div>
-            <h4 className="font-bold text-gray-900 mb-6">সার্ভিসসমূহ</h4>
-            <ul className="space-y-4 text-gray-500">
-              <li><a href="#" className="hover:text-indigo-600 transition-colors">কাস্টম টি-শার্ট</a></li>
-              <li><a href="#" className="hover:text-indigo-600 transition-colors">কর্পোরেট পোলো</a></li>
-              <li><a href="#" className="hover:text-indigo-600 transition-colors">স্পোর্টস জার্সি</a></li>
-              <li><a href="#" className="hover:text-indigo-600 transition-colors">ব্র্যান্ডিং কনসাল্টেশন</a></li>
-            </ul>
-          </div>
-          
-          <div>
-            <h4 className="font-bold text-gray-900 mb-6">নিউজলেটার</h4>
-            <p className="text-gray-500 mb-4 text-sm">নতুন ডিজাইন এবং অফার পেতে সাবস্ক্রাইব করুন।</p>
-            <div className="flex gap-2">
-              <input 
-                type="email" 
-                placeholder="ইমেইল"
-                className="bg-white border border-gray-200 rounded-xl px-4 py-2 w-full outline-none focus:border-indigo-600"
-              />
-              <button className="bg-indigo-600 text-white p-2 rounded-xl">
-                <ArrowRight size={20} />
+              <button 
+                onClick={handleSaveSettings}
+                className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-2"
+              >
+                <Save size={20} /> সেভ করুন
               </button>
             </div>
-          </div>
-        </div>
-        
-        <div className="pt-8 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-gray-500 text-sm">
-            © ২০২৬ Fast Unipolar. সর্বস্বত্ব সংরক্ষিত।
-          </p>
-          <div className="flex gap-6 text-sm text-gray-500">
-            <a href="#" className="hover:text-indigo-600">প্রাইভেসি পলিসি</a>
-            <a href="#" className="hover:text-indigo-600">টার্মস অফ সার্ভিস</a>
-          </div>
+          )}
+
+          {activeTab === 'gallery' && (
+            <div className="space-y-8">
+              <div className="bg-gray-50 p-8 rounded-3xl space-y-4">
+                <h4 className="font-bold text-lg">নতুন ছবি যোগ করুন</h4>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <input 
+                    placeholder="ইমেজ URL"
+                    value={newImageUrl}
+                    onChange={e => setNewImageUrl(e.target.value)}
+                    className="w-full px-6 py-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-indigo-600"
+                  />
+                  <input 
+                    placeholder="টাইটেল (ঐচ্ছিক)"
+                    value={newImageTitle}
+                    onChange={e => setNewImageTitle(e.target.value)}
+                    className="w-full px-6 py-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-indigo-600"
+                  />
+                </div>
+                <button 
+                  onClick={handleAddGalleryImage}
+                  className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-2"
+                >
+                  <Plus size={20} /> যোগ করুন
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {gallery.map(img => (
+                  <div key={img.id} className="relative group aspect-square rounded-2xl overflow-hidden">
+                    <img src={img.url} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    <button 
+                      onClick={() => handleDeleteGalleryImage(img.id)}
+                      className="absolute top-2 right-2 bg-red-600 text-white p-2 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'pixel' && (
+            <div className="space-y-6 bg-gray-50 p-8 rounded-3xl">
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-gray-700">মেটা পিক্সেল আইডি (Pixel ID)</label>
+                <input 
+                  value={localSettings.pixelId}
+                  onChange={e => setLocalSettings({...localSettings, pixelId: e.target.value})}
+                  placeholder="যেমন: 1234567890"
+                  className="w-full px-6 py-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-indigo-600"
+                />
+              </div>
+              <p className="text-sm text-gray-500">
+                পিক্সেল আইডি দেওয়ার পর নিচের ইভেন্টগুলো অটোমেটিকলি ট্র্যাক হবে:<br/>
+                - Time_30s, Time_60s, Time_120s<br/>
+                - Scroll_25, Scroll_50, Scroll_75, Scroll_95
+              </p>
+              <button 
+                onClick={handleSaveSettings}
+                className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-2"
+              >
+                <Save size={20} /> সেভ করুন
+              </button>
+            </div>
+          )}
         </div>
       </div>
-    </footer>
+    </motion.div>
   );
 };
 
 export default function App() {
+  const [settings, setSettings] = useState<GlobalSettings>(DEFAULT_SETTINGS);
+  const [gallery, setGallery] = useState<GalleryImage[]>([]);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [showAdmin, setShowAdmin] = useState(false);
+
+  useEffect(() => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+    });
+
+    const unsubscribeSettings = onSnapshot(doc(db, 'settings', 'global'), (doc) => {
+      if (doc.exists()) {
+        setSettings(doc.data() as GlobalSettings);
+      }
+      setLoading(false);
+    });
+
+    const unsubscribeGallery = onSnapshot(query(collection(db, 'gallery'), orderBy('createdAt', 'desc')), (snapshot) => {
+      setGallery(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as GalleryImage)));
+    });
+
+    return () => {
+      unsubscribeAuth();
+      unsubscribeSettings();
+      unsubscribeGallery();
+    };
+  }, []);
+
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+
+  const isAdmin = user?.email === 'hossainsolyman534@gmail.com';
+
   return (
     <div className="min-h-screen bg-white font-sans selection:bg-indigo-100 selection:text-indigo-900">
-      <Navbar />
+      <Toaster position="top-center" />
+      <MetaPixel pixelId={settings.pixelId} />
+      
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-20 items-center">
+            <div className="flex items-center gap-3">
+              <img 
+                src="https://raw.githubusercontent.com/stackblitz/stackblitz-images/main/fast-unipolar-logo.png" 
+                alt="Fast Unipolar Logo" 
+                className="h-12 w-auto object-contain"
+                onError={(e) => {
+                  // Fallback if the image doesn't load
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                }}
+              />
+              <div className="hidden bg-indigo-600 p-2 rounded-lg">
+                <Shirt className="text-white w-6 h-6" />
+              </div>
+              <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+                {settings.companyName}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-4">
+              {isAdmin && (
+                <button 
+                  onClick={() => setShowAdmin(!showAdmin)}
+                  className={cn(
+                    "p-2.5 rounded-full transition-all",
+                    showAdmin ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  )}
+                >
+                  <SettingsIcon size={20} />
+                </button>
+              )}
+              {!user && (
+                <button 
+                  onClick={() => signInWithPopup(auth, new GoogleAuthProvider())}
+                  className="p-2.5 bg-gray-100 text-gray-600 rounded-full hover:bg-gray-200 transition-all"
+                >
+                  <LogIn size={20} />
+                </button>
+              )}
+              <a 
+                href={`https://wa.me/${settings.whatsappNumber}`}
+                target="_blank" 
+                rel="noreferrer"
+                className="bg-green-600 text-white px-6 py-2.5 rounded-full font-semibold hover:bg-green-700 transition-all shadow-lg shadow-green-200 flex items-center gap-2"
+              >
+                <MessageSquare size={18} /> হোয়াটসঅ্যাপ করুন
+              </a>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <AnimatePresence>
+        {showAdmin && (
+          <AdminPanel 
+            settings={settings} 
+            gallery={gallery} 
+            user={user} 
+            onClose={() => setShowAdmin(false)}
+          />
+        )}
+      </AnimatePresence>
+
       <main>
-        <Hero />
-        <Services />
-        <WhyUs />
-        <Gallery />
-        <Contact />
+        {/* Hero */}
+        <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10">
+            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-100/50 rounded-full blur-3xl" />
+            <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-violet-100/50 rounded-full blur-3xl" />
+          </div>
+
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              <motion.div
+                initial={{ opacity: 0, x: -50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6 }}
+              >
+                <span className="inline-block px-4 py-1.5 bg-indigo-50 text-indigo-600 rounded-full text-sm font-bold tracking-wide uppercase mb-6">
+                  প্রিমিয়াম কাস্টম অ্যাপারেল
+                </span>
+                <h1 className="text-5xl lg:text-7xl font-extrabold text-gray-900 leading-[1.1] mb-6">
+                  {settings.heroTitle}
+                </h1>
+                <p className="text-xl text-gray-600 mb-10 leading-relaxed max-w-xl">
+                  {settings.heroSubtitle}
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <a 
+                    href={`https://wa.me/${settings.whatsappNumber}`}
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="bg-green-600 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:bg-green-700 transition-all shadow-xl shadow-green-200 flex items-center justify-center gap-2"
+                  >
+                    হোয়াটসঅ্যাপে অর্ডার দিন <MessageSquare size={20} />
+                  </a>
+                  <a 
+                    href="#gallery"
+                    className="bg-white text-gray-900 border-2 border-gray-100 px-8 py-4 rounded-2xl font-bold text-lg hover:border-indigo-200 hover:bg-indigo-50/30 transition-all flex items-center justify-center gap-2"
+                  >
+                    আমাদের কাজ দেখুন
+                  </a>
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ 
+                  opacity: 1, 
+                  scale: 1,
+                  y: [0, -15, 0] 
+                }}
+                transition={{ 
+                  y: { duration: 5, repeat: Infinity, ease: "easeInOut" }
+                }}
+                className="relative"
+              >
+                <div className="relative z-10 rounded-3xl overflow-hidden shadow-2xl shadow-indigo-200/50">
+                  <img
+                    src="https://picsum.photos/seed/apparel-hero/800/1000"
+                    alt="Custom Apparel"
+                    className="w-full h-auto object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        </section>
+
+        {/* Services */}
+        <section id="services" className="py-24 bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-3xl mx-auto mb-16">
+              <h2 className="text-4xl font-bold text-gray-900 mb-4">আমাদের সার্ভিসসমূহ</h2>
+              <p className="text-lg text-gray-600">আমরা প্রতিটি ডিজাইন আপনার ব্র্যান্ডের গাইডলাইন মেনে নিখুঁতভাবে তৈরি করি।</p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8">
+              {[
+                { title: 'কাস্টম টি-শার্ট', desc: 'অফিস ইভেন্ট বা প্রমোশনের জন্য প্রিমিয়াম কোয়ালিটি টি-শার্ট।', color: 'bg-blue-50 text-blue-600', icon: <Shirt /> },
+                { title: 'কর্পোরেট পোলো', desc: 'অফিসিয়াল লুকের জন্য এমব্রয়ডারি করা স্মার্ট পোলো শার্ট।', color: 'bg-indigo-50 text-indigo-600', icon: <Shirt /> },
+                { title: 'স্পোর্টস জার্সি', desc: 'টিম স্পিরিট বাড়াতে আধুনিক ও আরামদায়ক স্পোর্টস জার্সি।', color: 'bg-violet-50 text-violet-600', icon: <Zap /> }
+              ].map((service, idx) => (
+                <div key={idx} className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+                  <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center mb-6", service.color)}>
+                    {service.icon}
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-3">{service.title}</h3>
+                  <p className="text-gray-600 leading-relaxed">{service.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Gallery */}
+        <section id="gallery" className="py-24">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl font-bold text-gray-900 mb-4">{settings.galleryTitle}</h2>
+              <p className="text-lg text-gray-600">{settings.gallerySubtitle}</p>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+              {gallery.length > 0 ? gallery.map((img) => (
+                <motion.div
+                  key={img.id}
+                  layout
+                  whileHover={{ y: -5 }}
+                  className="group relative aspect-[3/4] rounded-2xl overflow-hidden bg-gray-100 shadow-sm hover:shadow-xl transition-all duration-300"
+                >
+                  <img
+                    src={img.url}
+                    alt={img.title}
+                    className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-125"
+                    referrerPolicy="no-referrer"
+                  />
+                  {img.title && (
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-6">
+                      <p className="text-white font-bold text-lg">{img.title}</p>
+                    </div>
+                  )}
+                </motion.div>
+              )) : (
+                [1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                  <div key={i} className="aspect-[3/4] rounded-2xl bg-gray-100 animate-pulse" />
+                ))
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* Contact */}
+        <section id="contact" className="py-24">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="bg-indigo-600 rounded-[3rem] shadow-2xl shadow-indigo-100 overflow-hidden p-8 sm:p-16 text-center text-white">
+              <h2 className="text-4xl font-bold mb-6">সরাসরি অর্ডার করতে হোয়াটসঅ্যাপ করুন</h2>
+              <p className="text-indigo-100 mb-12 text-lg max-w-2xl mx-auto">
+                আপনার পছন্দের ডিজাইন বা যেকোনো জিজ্ঞাসার জন্য সরাসরি আমাদের হোয়াটসঅ্যাপে মেসেজ দিন। আমরা দ্রুত আপনার সাথে যোগাযোগ করব।
+              </p>
+              
+              <div className="flex flex-col items-center gap-8">
+                <a 
+                  href={`https://wa.me/${settings.whatsappNumber}`}
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="bg-white text-green-600 px-12 py-6 rounded-2xl font-bold text-2xl hover:bg-gray-50 transition-all shadow-2xl flex items-center gap-4"
+                >
+                  <MessageSquare size={32} /> হোয়াটসঅ্যাপে কথা বলুন
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
-      <Footer />
     </div>
   );
 }
